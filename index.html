@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chessy — Play Chess</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <!-- White player panel -->
+    <aside class="panel" id="panel-w" aria-label="White player panel">
+      <header class="panel-head">
+        <span class="turn-dot" id="dot-w"></span>
+        <h1>White</h1>
+        <span class="advantage" id="adv-w"></span>
+      </header>
+      <div class="captured" id="captured-w" aria-label="Pieces captured by White"></div>
+      <footer class="score">Score <strong id="score-w">0</strong></footer>
+    </aside>
+
+    <!-- Centered board -->
+    <section class="stage">
+      <div class="status" id="status" role="status">White to move</div>
+      <div class="board" id="board">
+        <div class="squares" id="squares"></div>
+        <div class="effects" id="effects"></div>
+        <div class="pieces" id="pieces"></div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="new-game" type="button">&#10227; New Game</button>
+        <div class="pickers">
+          <label>Light squares <input type="color" id="color-light" value="#f0d9b5" /></label>
+          <label>Dark squares <input type="color" id="color-dark" value="#b58863" /></label>
+          <label>White pieces <input type="color" id="color-wp" value="#fafafa" /></label>
+          <label>Black pieces <input type="color" id="color-bp" value="#1c1c22" /></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Black player panel -->
+    <aside class="panel" id="panel-b" aria-label="Black player panel">
+      <header class="panel-head">
+        <span class="turn-dot" id="dot-b"></span>
+        <h1>Black</h1>
+        <span class="advantage" id="adv-b"></span>
+      </header>
+      <div class="captured" id="captured-b" aria-label="Pieces captured by Black"></div>
+      <footer class="score">Score <strong id="score-b">0</strong></footer>
+    </aside>
+  </main>
+
+  <!-- Pawn promotion dialog -->
+  <div class="promotion-overlay" id="promotion" hidden>
+    <div class="promotion-card">
+      <p>Promote pawn to</p>
+      <div class="promotion-choices" id="promotion-choices"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

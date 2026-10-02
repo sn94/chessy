@@ -1,0 +1,385 @@
+/* ============================================================
+   Chessy — styles
+   Theme is driven by CSS custom properties so the user can
+   re-color the board and pieces live from the controls.
+   ============================================================ */
+
+:root {
+  --light: #f0d9b5;          /* light squares            */
+  --dark: #b58863;           /* dark squares             */
+  --piece-white: #fafafa;    /* white piece glyph color  */
+  --piece-black: #1c1c22;    /* black piece glyph color  */
+
+  --bg: #12131a;
+  --panel: #1c1e28;
+  --border: #2e3140;
+  --text: #e9ebf2;
+  --muted: #969cab;
+  --accent: #5b8def;
+  --danger: #ef4444;
+
+  --sq: 64px;                /* square size, updated by JS */
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 800px at 20% -10%, #1e2233 0%, transparent 60%),
+    radial-gradient(1000px 700px at 110% 110%, #1a2331 0%, transparent 55%),
+    var(--bg);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 24px;
+  width: 100%;
+}
+
+/* ============================ Board ============================ */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.status {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  min-width: 240px;
+  text-align: center;
+}
+.status.alert { color: #ffd166; border-color: #8a6d1f; }
+
+.board {
+  position: relative;
+  width: min(72vh, 560px);
+  max-width: 92vw;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.4);
+  touch-action: none;
+}
+
+.squares {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+}
+
+.square { position: relative; }
+.square.light { background: var(--light); }
+.square.dark { background: var(--dark); }
+
+.square.last-from::before,
+.square.last-to::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 235, 130, 0.38);
+}
+.square.selected {
+  box-shadow: inset 0 0 0 3px var(--accent), inset 0 0 22px rgba(91, 141, 239, 0.5);
+}
+.square.check {
+  box-shadow: inset 0 0 0 3px var(--danger), inset 0 0 26px rgba(239, 68, 68, 0.55);
+}
+
+/* Legal-move hints */
+.square.hint::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: calc(var(--sq) * 0.3);
+  height: calc(var(--sq) * 0.3);
+  border-radius: 50%;
+  background: rgba(15, 20, 30, 0.3);
+}
+.square.hint-capture::after {
+  content: "";
+  position: absolute;
+  inset: 5%;
+  border: calc(var(--sq) * 0.07) solid rgba(220, 60, 60, 0.65);
+  border-radius: 50%;
+}
+
+/* Rank / file coordinates */
+.coord {
+  position: absolute;
+  font-size: calc(var(--sq) * 0.17);
+  font-weight: 700;
+  opacity: 0.85;
+  pointer-events: none;
+}
+.coord.rank { top: 2px; left: 3px; }
+.coord.file { bottom: 1px; right: 4px; }
+.square.light .coord { color: var(--dark); }
+.square.dark .coord { color: var(--light); }
+
+/* ============================ Pieces ============================ */
+
+.pieces { position: absolute; inset: 0; z-index: 3; }
+
+.piece {
+  position: absolute;
+  width: 12.5%;
+  height: 12.5%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.piece.dragging { cursor: grabbing; z-index: 50; }
+
+.glyph {
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", serif;
+  font-size: calc(var(--sq) * 0.78);
+  line-height: 1;
+  pointer-events: none;
+  transition: transform 0.12s ease;
+}
+.piece:hover .glyph { transform: scale(1.06); }
+.piece.dragging .glyph { transform: scale(1.12); }
+
+.piece.w .glyph {
+  color: var(--piece-white);
+  -webkit-text-stroke: calc(var(--sq) * 0.022) rgba(12, 14, 20, 0.8);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+.piece.b .glyph {
+  color: var(--piece-black);
+  -webkit-text-stroke: calc(var(--sq) * 0.022) rgba(255, 255, 255, 0.22);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+/* King shake while in check */
+.piece.shake { filter: drop-shadow(0 0 7px rgba(239, 68, 68, 0.9)); }
+.piece.shake .glyph { animation: king-shake 0.38s ease-in-out infinite; }
+@keyframes king-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  20% { transform: translateX(-2.5px) rotate(-5deg); }
+  40% { transform: translateX(2.5px) rotate(5deg); }
+  60% { transform: translateX(-1.8px) rotate(-4deg); }
+  80% { transform: translateX(1.8px) rotate(4deg); }
+}
+
+/* ============================ Capture burst ============================ */
+
+.effects { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+
+.burst { position: absolute; transform: translate(-50%, -50%); }
+.burst span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe9a8 0%, #ffb347 60%, #ff7b3c 100%);
+  box-shadow: 0 0 8px rgba(255, 170, 60, 0.9);
+  animation: burst-fly 0.6s ease-out forwards;
+}
+@keyframes burst-fly {
+  0% { transform: rotate(var(--a)) translateX(0) scale(var(--s)); opacity: 1; }
+  100% { transform: rotate(var(--a)) translateX(var(--d)) scale(0); opacity: 0; }
+}
+
+/* ============================ Side panels ============================ */
+
+.panel {
+  width: 210px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 200px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.panel-head { display: flex; align-items: center; gap: 8px; }
+.panel-head h1 { font-size: 17px; margin: 0; flex: 1; }
+
+.turn-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #454a59;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.turn-dot.active { background: #4ade80; box-shadow: 0 0 10px #4ade80; }
+
+.advantage { color: #4ade80; font-weight: 700; font-size: 14px; }
+
+.captured {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 2px;
+  align-content: flex-start;
+  min-height: 64px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px dashed var(--border);
+}
+.cap {
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", serif;
+  font-size: 22px;
+  line-height: 1.15;
+}
+.cap.w { color: var(--piece-white); -webkit-text-stroke: 0.6px rgba(12, 14, 20, 0.8); }
+.cap.b { color: var(--piece-black); -webkit-text-stroke: 0.6px rgba(255, 255, 255, 0.45); }
+
+.score {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.score strong { color: var(--text); font-size: 20px; }
+
+/* ============================ Controls ============================ */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 16px;
+  align-items: center;
+}
+
+.btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.pickers { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; }
+.pickers label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.pickers input[type="color"] {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* ============================ Promotion dialog ============================ */
+
+.promotion-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(8, 10, 16, 0.65);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.promotion-overlay[hidden] { display: none; }
+
+.promotion-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: pop 0.18s ease;
+}
+@keyframes pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.promotion-card p { margin: 0 0 12px; color: var(--muted); font-size: 14px; letter-spacing: 0.5px; }
+
+.promotion-choices { display: flex; gap: 10px; }
+.promo-btn {
+  width: 64px;
+  height: 64px;
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", serif;
+  font-size: 42px;
+  line-height: 1;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.promo-btn:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.12); }
+.promo-btn.w { color: var(--piece-white); -webkit-text-stroke: 1px rgba(12, 14, 20, 0.8); }
+.promo-btn.b { color: var(--piece-black); -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5); }
+
+/* ============================ Responsive ============================ */
+
+@media (max-width: 980px) {
+  body { align-items: flex-start; }
+  .app { flex-direction: column; gap: 16px; padding: 16px; }
+  .board { width: min(92vw, 60vh); }
+  .panel { width: 100%; min-height: 0; }
+  .captured { min-height: 40px; }
+  .status { min-width: 0; width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .app { padding: 12px; gap: 12px; }
+  .status { font-size: 15px; padding: 6px 12px; }
+  .controls { gap: 8px 10px; }
+  .btn { padding: 8px 14px; font-size: 13px; }
+  .pickers { gap: 6px 10px; }
+  .pickers label { font-size: 11.5px; }
+  .pickers input[type="color"] { width: 22px; height: 22px; }
+  .panel { padding: 12px; }
+  .panel-head h1 { font-size: 15px; }
+  .cap { font-size: 18px; }
+  .score strong { font-size: 17px; }
+}
